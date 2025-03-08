@@ -34,6 +34,7 @@ enum Commands {
         image_hash: String,
         image_signature: String,
     },
+    VerifyOriginalImage { image_hash: String },
 }
 
 #[tokio::main]
@@ -116,6 +117,16 @@ async fn main() -> Result<()> {
             // Send the proof transaction
             let proof_tx_hash = client.send_tx_proof(&proof_tx).await.unwrap();
             println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
+        }
+        Commands::VerifyOriginalImage {image_hash} => {
+            let initial_state: ImageState = client
+                .get_contract(&contract_name.clone().into())
+                .await
+                .unwrap()
+                .state
+                .into();
+            let is_original = initial_state.is_original_image(image_hash);
+            println!("✅ Is original Image ?: {:?}", is_original);
         }
     }
     Ok(())

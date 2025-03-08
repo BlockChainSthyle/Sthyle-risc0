@@ -30,7 +30,7 @@ impl HyleContract for ImageState {
 #[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
 pub enum ImageAction {
     RegisterImage { image_hash: String, image_signature: String },
-    // VerifyImage { hash: Vec<u8> },
+    //VerifyOriginalImage { image_hash: String },
     // RegisterEdit { original_hash: Vec<u8>, edited_hash: Vec<u8>, owner: String },
 }
 
@@ -45,6 +45,15 @@ impl ImageState {
     pub fn as_bytes(&self) -> Result<Vec<u8>, Error> {
         borsh::to_vec(self)
     }
+
+    pub fn is_original_image(&self, img_hash: String) -> Result<bool, Error> {
+        match self.hash_map.get(&img_hash){
+            Some(x)=> Ok(true),
+            None => Ok(false),
+        }
+    }
+
+
 }
 
 /// Utils function for the host
