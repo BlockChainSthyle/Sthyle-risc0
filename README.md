@@ -1,85 +1,66 @@
-# Template for a Hyle-Risc0 smart contract
+# SP1 Project Template
 
-This basic implementation is based on "counter" contract, that increment / decrement a value.
+This is a simple example of a token transfer contract working with SP1 prover.
+The logic is the very similar to the `simple_token` example (for risc0)
 
-## Prerequisites
+## Requirements
 
-- [Install Rust](https://www.rust-lang.org/tools/install) (you'll need `rustup` and Cargo).
-- For our example, [install RISC Zero](https://dev.risczero.com/api/zkvm/install).
-- Run a local devnet node:
+- [Rust](https://rustup.rs/)
+- [SP1 4.0.0-rc1](https://docs.succinct.xyz/getting-started/install.html)
+- [A running hyle devnet](https://docs.hyle.eu/developers/quickstart/devnet/)
 
-Clone the [hyle](https://github.com/Hyle-org/hyle) repo, checkout the version you need, and run:
-```sh 
-export RISC0_DEV_MODE=1
-cargo run -- --pg
-```
+## Running the Project
 
-## Quickstart
+### Build the Program
 
-### Build and register the contract
-
-To build and register the smart contract on the local node, run:
-
-```bash
-cargo run -- register-contract
-```
-
-The expected output on the node is `📝 Registering contract counter`.
-
-
-### Executing the Project Locally in Development Mode
-
-During development, faster iteration upon code changes can be achieved by leveraging [dev-mode], we strongly suggest activating it during your early development phase. 
-
-```bash
-RISC0_DEV_MODE=1 cargo run
-```
-
-### Execute the contract & send a tx on-chain
+To build the program, run the following command:
 
 ```sh
-RISC0_DEV_MODE=1 cargo run -- increment
+cd program
+cargo prove build
 ```
 
+### Build and register the identity contract
 
-## Directory Structure
+To build all methods and register the smart contract on the local node from the source, run:
 
-It is possible to organize the files for these components in various ways.
-However, in this starter template we use a standard directory structure for zkVM
-applications, which we think is a good starting point for your applications.
-
-```text
-project_name
-├── Cargo.toml
-├── contract 
-│   ├── Cargo.toml
-│   └── src
-│       └── lib.rs         <-- [Contract code goes here, common to host & guest]
-├── host
-│   ├── Cargo.toml
-│   └── src
-│       └── main.rs        <-- [Host code goes here]
-└── methods
-    ├── Cargo.toml
-    ├── build.rs
-    ├── guest
-    │   ├── Cargo.toml
-    │   └── src
-    │       └── main.rs    <-- [Guest code goes here]
-    └── src
-        └── lib.rs
+```sh
+cd script
+cargo run -- register-contract
 ```
+The expected output is `📝 Registering new contract simple_identity`.
 
-<!--[bonsai access]: https://bonsai.xyz/apply-->
-[cargo-risczero]: https://docs.rs/cargo-risczero
-[crates]: https://github.com/risc0/risc0/blob/main/README.md#rust-binaries
-[dev-docs]: https://dev.risczero.com
-[dev-mode]: https://dev.risczero.com/api/generating-proofs/dev-mode
-[docs.rs]: https://docs.rs/releases/search?query=risc0
-[examples]: https://github.com/risc0/risc0/tree/main/examples
-[risc0-build]: https://docs.rs/risc0-build
-[risc0-repo]: https://www.github.com/risc0/risc0
-[risc0-zkvm]: https://docs.rs/risc0-zkvm
-[rust-toolchain]: rust-toolchain.toml
-[rustup]: https://rustup.rs
-[zkvm-overview]: https://dev.risczero.com/zkvm
+### Register an account / Sign up
+
+To register an account with a username (alice) and password (abc123), execute:
+
+```sh
+cargo run -- register-identity alice.simple_identity abc123
+```
+The node's logs will display:
+
+```sh
+INFO hyle_verifiers: ✅ SP1 proof verified.
+
+```
+### Verify identity / Login
+
+To verify alice's identity:
+
+```sh
+cargo run -- verify-identity alice.simple_identity abc123 0
+```
+This command will:
+
+1. Send a blob transaction to verify `alice`'s identity.
+1. Generate a ZK proof of that identity. It will only be valid once, thus the inclusion of a nonce.
+1. Send the proof to the devnet.
+
+Upon reception of the proof, the node will:
+
+1. Verify the proof.
+1. Settle the blob transaction.
+1. Update the contract's state.
+
+The node's logs will display:
+
