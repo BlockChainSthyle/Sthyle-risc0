@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 sdk = { workspace = true }
+c2pa = "0.45.2"
 serde = { version = "1.0", default-features = false, features = [
     "derive",
     "alloc",

@@ -27,7 +27,7 @@ struct Cli {
 enum Commands {
     RegisterContract {},
     RegisterImage {
-        #[arg(short, long)]
+        #[arg(short = 'x', long)]
         hash: String,
 
         #[arg(short, long)]
@@ -120,11 +120,11 @@ async fn process_transaction<'a>(
     contract_name: &str,
     identity: Identity, // Corrected type
     action: ImageAction,
-    prover: &'a Risc0Prover<'a>, // ✅ Add explicit lifetime parameter
+    prover: &'a Risc0Prover<'a>,
 ) -> Result<()> {
     // Fetch contract state
     let mut initial_state: ImageRegistry = client
-        .get_contract(&contract_name.clone().into())
+        .get_contract(&contract_name.into())
         .await
         .unwrap()
         .state
@@ -162,6 +162,7 @@ async fn process_transaction<'a>(
 
     // Generate zk proof
     let proof = prover.prove(inputs).await.unwrap();
+    assert!(prover.verify(&proof).is_ok(), "Proof failed verification!");
 
     // Submit proof transaction
     let proof_tx = ProofTransaction {

@@ -1,4 +1,4 @@
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::{io::Error, BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
 use sdk::{Digestable, HyleContract, RunResult};
 
@@ -17,12 +17,16 @@ pub struct ImageRegistry {
     pub edits: Vec<(Vec<u8>, Vec<u8>, String)>, // (original_hash, edited_hash, owner)
 }
 
-impl Default for ImageRegistry {
-    fn default() -> Self {
+impl ImageRegistry {
+    pub fn default() -> Self {
         Self {
             images: Vec::new(),
             edits: Vec::new(),
         }
+    }
+
+    pub fn as_bytes(&self) -> Result<Vec<u8>, Error> {
+        borsh::to_vec(self)
     }
 }
 
@@ -68,6 +72,8 @@ impl Digestable for ImageRegistry {
 
 impl From<sdk::StateDigest> for ImageRegistry {
     fn from(state: sdk::StateDigest) -> Self {
-        borsh::from_slice(&state.0).unwrap_or_default()
+        borsh::from_slice(&state.0)
+            .map_err(|_| "Could not decode hyllar state".to_string())
+            .unwrap()
     }
 }
