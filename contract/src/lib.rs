@@ -20,8 +20,19 @@ impl HyleContract for ImageState {
                     "Nothing added...".to_string()
                 }
             }
+            ImageAction::RegisterEdit {original_image_hash, edited_image_hash} => {
+                if self.hash_map.contains_key(&edited_image_hash){
+                    "Hash Edited Hash Already Exists !".to_string()
+                }else if !self.hash_map.contains_key(&original_image_hash){
+                    "original key does not exists !".to_string()
+                } else {
+                    self.hash_map.insert(edited_image_hash, Some(original_image_hash));
+                    "Edition added!".to_string()
+                }
+            }
+
         };
-        println!("Arriving to ok");
+        println!("Arriving to ok, {}", program_output);
         Ok((program_output, ctx, vec![]))
     }
 }
@@ -31,7 +42,7 @@ impl HyleContract for ImageState {
 pub enum ImageAction {
     RegisterImage { image_hash: String, image_signature: String },
     //VerifyOriginalImage { image_hash: String },
-    // RegisterEdit { original_hash: Vec<u8>, edited_hash: Vec<u8>, owner: String },
+    RegisterEdit { original_image_hash: String, edited_image_hash: String },
 }
 
 /// The state of the contract, in this example it is fully serialized on-chain
@@ -48,7 +59,7 @@ impl ImageState {
 
     pub fn is_original_image(&self, img_hash: String) -> Result<bool, Error> {
         match self.hash_map.get(&img_hash){
-            Some(x)=> Ok(true),
+            Some(_)=> Ok(true),
             None => Ok(false),
         }
     }
