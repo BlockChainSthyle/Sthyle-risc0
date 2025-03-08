@@ -1,8 +1,8 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use client_sdk::helpers::risc0::Risc0Prover;
-use contract::Counter;
-use contract::CounterAction;
+use contract::ImageState;
+use contract::ImageAction;
 use sdk::api::APIRegisterContract;
 use sdk::BlobTransaction;
 use sdk::ProofTransaction;
@@ -49,7 +49,7 @@ async fn main() -> Result<()> {
     match cli.command {
         Commands::RegisterContract {} => {
             // Build initial state of contract
-            let initial_state = Counter { value: 0 };
+            let initial_state = ImageState { value: 0 };
 
             // Send the transaction to register the contract
             let res = client
@@ -64,7 +64,7 @@ async fn main() -> Result<()> {
         }
         Commands::Increment {} => {
             // Fetch the initial state from the node
-            let mut initial_state: Counter = client
+            let mut initial_state: ImageState = client
                 .get_contract(&contract_name.clone().into())
                 .await
                 .unwrap()
@@ -74,7 +74,7 @@ async fn main() -> Result<()> {
             // ----
             // Build the blob transaction
             // ----
-            let action = CounterAction::Increment {};
+            let action = ImageAction::Increment {};
             let blobs = vec![action.as_blob(contract_name)];
             let blob_tx = BlobTransaction::new(identity.clone(), blobs.clone());
 
