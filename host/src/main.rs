@@ -36,7 +36,9 @@ enum Commands {
         owner_pk:String,
     },
     VerifyOriginalImage { image_hash: String },
-    RegisterEdit{original_image_hash: String, edited_image_hash: String, original_edit_signature: String}
+    RegisterEdit{original_image_hash: String, edited_image_hash: String, original_edit_signature: String},
+    AddPublisher { original_image_hash: String, original_image_signature: String, publisher_pk: String },
+
 
 }
 
@@ -144,6 +146,57 @@ async fn main() -> Result<()> {
             // Build the blob transaction
             // ----
             let action = ImageAction::RegisterEdit {original_image_hash, edited_image_hash, original_edit_signature};
+            let blobs = vec![action.as_blob(contract_name)];
+            let blob_tx = BlobTransaction::new(identity.clone(), blobs.clone());
+
+            // Send the blob transaction
+            let blob_tx_hash = client.send_tx_blob(&blob_tx).await.unwrap();
+            println!("✅ Blob tx sent. Tx hash: {}", blob_tx_hash);
+
+            // ----
+            // Prove the state transition
+            // ----
+
+            // Build the contract input
+            let inputs = ContractInput {
+                state: initial_state.as_bytes().unwrap(),
+                identity: identity.clone().into(),
+                tx_hash: blob_tx_hash,
+                private_input: vec![],
+                tx_ctx: None,
+                blobs: blobs.clone(),
+                index: sdk::BlobIndex(0),
+            };
+
+            let (program_outputs, _, _) = initial_state.execute(&inputs).unwrap();
+            println!("🚀 Executed: {}", program_outputs);
+
+            // Generate the zk proof
+            let proof = prover.prove(inputs).await.unwrap();
+
+            // Build the Proof transaction
+            let proof_tx = ProofTransaction {
+                proof,
+                contract_name: contract_name.clone().into(),
+            };
+
+            // Send the proof transaction
+            let proof_tx_hash = client.send_tx_proof(&proof_tx).await.unwrap();
+            println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
+        }
+        Commands::AddPublisher {original_image_hash, original_image_signature, publisher_pk} => {
+            // Fetch the initial state from the node
+            let mut initial_state: ImageState = client
+                .get_contract(&contract_name.clone().into())
+                .await
+                .unwrap()
+                .state
+                .into();
+
+            // ----
+            // Build the blob transaction
+            // ----
+            let action = ImageAction::AddPublisher {original_image_hash, original_image_signature, publisher_pk};
             let blobs = vec![action.as_blob(contract_name)];
             let blob_tx = BlobTransaction::new(identity.clone(), blobs.clone());
 
