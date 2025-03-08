@@ -676,6 +676,7 @@ name = "contract"
 version = "0.1.0"
 dependencies = [
  "borsh",
+ "hex",
  "hyle-contract-sdk",
  "serde",
 ]

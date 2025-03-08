@@ -33,9 +33,10 @@ enum Commands {
     RegisterImage {
         image_hash: String,
         image_signature: String,
+        owner_pk:String,
     },
     VerifyOriginalImage { image_hash: String },
-    RegisterEdit{original_image_hash: String, edited_image_hash: String}
+    RegisterEdit{original_image_hash: String, edited_image_hash: String, original_edit_signature: String}
 
 }
 
@@ -69,7 +70,7 @@ async fn main() -> Result<()> {
                 .await?;
             println!("✅ Register contract tx sent. Tx hash: {}", res);
         }
-        Commands::RegisterImage {image_hash, image_signature} => {
+        Commands::RegisterImage {image_hash, image_signature, owner_pk} => {
             // Fetch the initial state from the node
             let mut initial_state: ImageState = client
                 .get_contract(&contract_name.clone().into())
@@ -81,7 +82,7 @@ async fn main() -> Result<()> {
             // ----
             // Build the blob transaction
             // ----
-            let action = ImageAction::RegisterImage {image_hash, image_signature};
+            let action = ImageAction::RegisterImage {image_hash, image_signature, owner_pk};
             let blobs = vec![action.as_blob(contract_name)];
             let blob_tx = BlobTransaction::new(identity.clone(), blobs.clone());
 
@@ -130,7 +131,7 @@ async fn main() -> Result<()> {
             let is_original = initial_state.is_original_image(image_hash);
             println!("✅ Is original Image ?: {:?}", is_original);
         }
-        Commands::RegisterEdit {original_image_hash, edited_image_hash} =>{
+        Commands::RegisterEdit {original_image_hash, edited_image_hash,original_edit_signature} =>{
             // Fetch the initial state from the node
             let mut initial_state: ImageState = client
                 .get_contract(&contract_name.clone().into())
@@ -142,7 +143,7 @@ async fn main() -> Result<()> {
             // ----
             // Build the blob transaction
             // ----
-            let action = ImageAction::RegisterEdit {original_image_hash, edited_image_hash};
+            let action = ImageAction::RegisterEdit {original_image_hash, edited_image_hash, original_edit_signature};
             let blobs = vec![action.as_blob(contract_name)];
             let blob_tx = BlobTransaction::new(identity.clone(), blobs.clone());
 

@@ -12,22 +12,38 @@ impl HyleContract for ImageState {
 
         // Execute the contract logic
         let program_output = match action {
-            ImageAction::RegisterImage { image_hash, image_signature } => {
+            ImageAction::RegisterImage { image_hash, image_signature, owner_pk } => {
+                println!("Trying register");
+                println!("Trying register {:?}", self.hash_map.keys());
+
                 if !self.hash_map.contains_key(&image_hash) {
-                    self.hash_map.insert(image_hash, None);
+
+                    self.hash_map.insert(image_hash, (None, owner_pk));
+                    println!("Trying add");
                     "Image registered by ".to_string()
                 }else{
                     "Nothing added...".to_string()
                 }
             }
-            ImageAction::RegisterEdit {original_image_hash, edited_image_hash} => {
+            ImageAction::RegisterEdit {original_image_hash, edited_image_hash, original_edit_signature} => {
+                println!("Trying register {:?}", self.hash_map.keys());
                 if self.hash_map.contains_key(&edited_image_hash){
                     "Hash Edited Hash Already Exists !".to_string()
                 }else if !self.hash_map.contains_key(&original_image_hash){
                     "original key does not exists !".to_string()
-                } else {
-                    self.hash_map.insert(edited_image_hash, Some(original_image_hash));
-                    "Edition added!".to_string()
+                }else {
+                    let owner_pk = self.hash_map.get(&original_image_hash).unwrap().1.clone();
+
+                    let message = format!("{}{}", original_image_hash, edited_image_hash);
+                    let signature_verification = dummy_verify_signature(owner_pk.clone(), message, original_edit_signature);
+                    if signature_verification {
+                        println!("Trying register {:?}", self.hash_map.keys());
+                        self.hash_map.insert(edited_image_hash, (Some(original_image_hash), owner_pk));
+                        println!("Trying register {:?}", self.hash_map.keys());
+                        "Edit registered successfully !".to_string()
+                    } else {
+                        "Invalid signature! Edit not registered.".to_string()
+                    }
                 }
             }
 
@@ -37,18 +53,26 @@ impl HyleContract for ImageState {
     }
 }
 
+fn dummy_verify_signature(
+    _pk: String,
+    _message: String,
+    signature: String,
+) -> bool {
+    signature.to_lowercase() == "true"
+}
+
 /// The action represents the different operations that can be done on the contract
 #[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
 pub enum ImageAction {
-    RegisterImage { image_hash: String, image_signature: String },
+    RegisterImage { image_hash: String, image_signature: String, owner_pk:String },
     //VerifyOriginalImage { image_hash: String },
-    RegisterEdit { original_image_hash: String, edited_image_hash: String },
+    RegisterEdit { original_image_hash: String, edited_image_hash: String, original_edit_signature: String },
 }
 
 /// The state of the contract, in this example it is fully serialized on-chain
 #[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Debug, Clone)]
 pub struct ImageState {
-    pub hash_map: HashMap<String, Option<String>>,
+    pub hash_map: HashMap<String, (Option<String>, String)>,
 }
 
 /// Utils function for the host
