@@ -3,7 +3,7 @@
 
 extern crate alloc;
 
-use contract::Counter;
+use contract::ImageRegistry;
 use sdk::guest::execute;
 use sdk::guest::GuestEnv;
 use sdk::guest::Risc0Env;
@@ -18,6 +18,6 @@ fn main() {
 
     let env = Risc0Env {};
     let input = env.read();
-    let (_, output) = execute::<Counter>(&input);
+    let (_, output) = execute::<ImageRegistry>(&input);
     env.commit(&output);
 }
