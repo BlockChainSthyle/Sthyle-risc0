@@ -29,7 +29,7 @@ The expected output on the node is `📝 Registering contract counter`.
 
 ### Executing the Project Locally in Development Mode
 
-During development, faster iteration upon code changes can be achieved by leveraging [dev-mode], we strongly suggest activating it during your early development phase. 
+During development, faster iteration upon code changes can be achieved by leveraging [dev-mode], we strongly suggest activating it during your early development phase.
 
 ```bash
 RISC0_DEV_MODE=1 cargo run
@@ -40,6 +40,41 @@ RISC0_DEV_MODE=1 cargo run
 ```sh
 RISC0_DEV_MODE=1 cargo run -- increment
 ```
+
+## CLI commands
+
+```bash
+cargo run -- register-image "hash_original_image" "image_signature" "owner_public_key""
+```
+Verifies the **image_signature**. If verified, adds the **hash_origianl_image** to the verified images with
+**owner_pulbic_key** as its owner.
+
+
+```bash
+cargo run -- verify-original-image "hash_original_image"
+```
+verifies if the given **hash_origianl_image** is unedited.
+
+
+```bash
+cargo run -- add-publisher "hash_original_image" "digitalSig" "public_key_of_publisher"
+```
+Adds the publishing right of **hash_original_image** to the user with **public_key_of_publisher**.
+Only works if the **hash_original_image** is digitally signed with **digitalSig** by the owner.
+
+
+```bash
+cargo run -- register-edit "hash_original_image" "hash_edited_image" "digitalSig"
+```
+Connects **hash_edited_image** to the original image **hash_original_image** if digitallySigned by a recognized publisher.
+
+
+```bash
+cargo run -- verify-edit-image "hash_edited_image" 
+```
+Checks if the hash_edited_image corresponds to some original image and responds the origianl image if found.
+
+!Reusing the public key as the digital signature as a simplification!
 
 
 ## Directory Structure
