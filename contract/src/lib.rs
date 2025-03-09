@@ -56,9 +56,20 @@ impl HyleContract for ImageState {
                 } else if !self.hash_map.contains_key(&original_image_hash) {
                     "Original image does not exist!".to_string()
                 } else {
-                    let owner_pk = self.hash_map.get(&original_image_hash).unwrap().owner_pk.clone();
+                    let initial_img_hash = match self.find_original_image(original_image_hash.clone()) {
+                        Ok(hash) => hash,
+                        Err(err) => {
+                            eprintln!("Error finding original image: {}", err);
+                            return Err(err.to_string());
+                        }
+                    };
+                    let initial_img_meta = self.hash_map.get(&initial_img_hash).unwrap();
+
+                    let publisher_pk_set = initial_img_meta.publishers.clone();
+                    let owner_pk = initial_img_meta.owner_pk.clone();
                     let message = format!("{}{}", original_image_hash, edited_image_hash);
-                    let signature_verification = dummy_verify_signature(owner_pk.clone(), message, original_edit_signature);
+                    let signature_verification = dummy_verify_signature(owner_pk.clone(), message.clone(), original_edit_signature.clone())
+                        || publisher_pk_set.iter().any(|e| dummy_verify_signature(e.clone(), message.clone(), original_edit_signature.clone()));
 
                     if signature_verification {
                         self.hash_map.insert(
@@ -107,7 +118,7 @@ impl HyleContract for ImageState {
 }
 
 fn dummy_verify_signature(_pk: String, _message: String, signature: String) -> bool {
-    signature.to_lowercase() == "true"
+    signature.to_lowercase() == _pk.to_lowercase()
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
@@ -126,6 +137,21 @@ impl ImageState {
     pub fn is_original_image(&self, img_hash: String) -> Result<bool, Error> {
         Ok(self.hash_map.contains_key(&img_hash) && self.hash_map[&img_hash].is_root)
     }
+    pub fn find_original_image(&self, mut img_hash: String) -> Result<String, Error> {
+        while let Some(metadata) = self.hash_map.get(&img_hash) {
+            if metadata.is_root {
+                return Ok(img_hash); // Found the original image
+            }
+            // Move to the previous image in the chain (if exists)
+            if let Some(prev_hash) = &metadata.previous_image_hash {
+                img_hash = prev_hash.clone();
+            } else {
+                break; // Stop if no previous image exists (should not happen)
+            }
+        }
+        Err(Error::new(std::io::ErrorKind::NotFound, "Original image not found"))
+    }
+
 }
 
 impl ImageAction {
