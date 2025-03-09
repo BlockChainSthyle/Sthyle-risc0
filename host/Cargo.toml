@@ -4,9 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-sdk = { workspace = true }
+warp = "0.3"
+sdk = {workspace = true }
 client-sdk = { workspace = true, features = ["rest", "risc0"] }
 contract = { path = "../contract", package = "contract"}
+serde = {version = "1.0", features = ["derive"]}
 
 methods = { path = "../methods" }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

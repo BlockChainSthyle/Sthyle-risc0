@@ -137,6 +137,9 @@ impl ImageState {
     pub fn is_original_image(&self, img_hash: String) -> Result<bool, Error> {
         Ok(self.hash_map.contains_key(&img_hash) && self.hash_map[&img_hash].is_root)
     }
+    pub fn is_edit_image(&self, img_hash: String) -> Result<bool, Error> {
+        Ok(self.hash_map.contains_key(&img_hash) && !self.hash_map[&img_hash].is_root)
+    }
     pub fn find_original_image(&self, mut img_hash: String) -> Result<String, Error> {
         while let Some(metadata) = self.hash_map.get(&img_hash) {
             if metadata.is_root {
